@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+	<title>Lost in the MTA</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.0/d3.min.js" charset="utf-8"></script>
+</head>
+
+<style type="text/css">
+
+	body {
+		font-family: helvetica;
+		font-size: 12px;
+	}
+
+	#svgDiv {
+		/*border-style: solid;*/
+		/*border-color: #0000ff #ff0000;*/
+		width: 80%;
+		margin: 0 auto;
+	}
+
+	.mySvg {
+		border: 1px solid #f0f;
+		display: block;
+		margin: auto;
+	}
+
+</style>
+
+<body>
+
+	<div id=svgDiv></div>
+
+	<script>
+	//To Do
+
+		var margin = {top: 20, right: 20, bottom: 20, left: 20};
+
+		var width = 600 - margin.left - margin.right,
+				height = 400 - margin.top - margin.bottom;
+
+		var mySvg = d3.select("#svgDiv").append("svg")
+			.attr("class", "mySvg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		var parseYear = d3.timeParse("%Y");
+		var parseMonth = d3.timeParse("%b");
+
+		var xScale = d3.scaleTime()
+			.domain([new Date(2016, 0, 1), new Date(2016, 11, 31)])
+			.range([0, width]);
+
+		d3.csv("global-temp.csv", function(error, globtemp) {
+			if (error) throw error;
+			
+			globtemp.forEach(function(d) {
+				d.Jan = +d.Jan;
+				d.Feb = +d.Feb;
+				d.Mar = +d.Mar;
+				d.Apr = +d.Apr;
+				d.May = +d.May;
+				d.Jun = +d.Jun;
+				d.Jul = +d.Jul;
+				d.Aug = +d.Aug;
+				d.Sep = +d.Sep;
+				d.Oct = +d.Oct;
+				d.Nov = +d.Nov;
+				d.Dec = +d.Dec;
+			});
+
+			window.globtemp = globtemp;
+			console.log(globtemp[0]);
+
+		nestedglobtemp = d3.nest()
+			.key(function(d) {return d.Year})
+			.entries(globtemp);
+		console.log(nestedglobtemp);
+
+
+
+		}); // d3.json callback
+
+	</script>
+
+</body>

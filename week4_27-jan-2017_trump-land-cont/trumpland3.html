@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+	<title>Trump Land</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.0/d3.min.js" charset="utf-8"></script>
+</head>
+
+<style type="text/css">
+
+	/* Attempt to have body, html occupy full height of page. New problem: scroll bar appears*/
+	/*body, html {
+		min-height: 100% !important;
+    height: 100%;
+	}*/
+
+	body {
+		font-family: helvetica;
+		font-size: 12px;
+	}
+
+	#svgDiv {
+		border-style: solid;
+		border-color: #0000ff #ff0000;
+		/*height 100% doesn't work unless body and HTML are also 100%*/
+		/*height: 100%;*/
+		width: 80%;
+		/*center within div*/
+		margin: 0 auto;
+	}
+
+	svg {
+		border: 1px solid #f0f;
+		display: block;
+		margin: auto;
+	}
+
+	.links {
+		stroke: blue;
+		stroke-width: 2px;
+	}
+
+	.nodes circle {
+	  fill: #ccc;
+	  stroke: #000;
+}
+
+</style>
+
+<body>
+
+	<!-- <div id=svgDiv> -->
+	<!-- <svg id=svg width="960" height="600"></svg> -->
+	<!-- </div> -->
+
+	<script>
+	// To Do
+	// Why single floating node? Double check that data is working properly
+
+	// ASK ERIC
+	// global temp dataset form
+	// d3 office hours
+
+		var margin = {top: 20, right: 50, bottom: 50, left: 50},
+			width = 1300 - margin.left - margin.right,
+			height = 800 - margin.top - margin.bottom;
+
+		var zoom = d3.zoom().scaleExtent([0.3, 5]).on("zoom", function () {
+			gContainer.attr("transform", d3.event.transform)
+			});
+
+		var svg = d3.select("body").append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.call(zoom);
+
+		var gContainer = svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+ 		zoom.scaleTo(svg, .5);
+
+		var simulation = d3.forceSimulation()
+			.force("charge", d3.forceManyBody().strength(-50))
+	    .force("link", d3.forceLink().id(function(d) { return d.id; }))
+	    .force("x", d3.forceX(width / 2))
+	    .force("y", d3.forceY(height / 2));
+
+	  queue()
+	  	.defer(d3.csv, "org-org-connections.csv")
+	  	.defer(d3.csv, "person-org-connections.csv")
+	  	.defer(d3.csv, "person-person-connections.csv")
+	  	.await(ready);
+
+	  function ready (err, orgOrg, personOrg, personPerson) {
+	  	
+	  }
+
+		d3.csv("TrumpWorldData.csv", function(error, dataset) {
+
+			var orgAs = dataset.map(function(d) { return d["Organization A"]; });
+			var orgBs = dataset.map(function(d) { return d["Organization B"]; });
+
+			var organizations = dataset.map(function(d) { return d.Organization; });
+			var people = dataset.map(function(d) { return d.Person; });
+
+			var pepAs = dataset.map(function(d) { return d["Person A"]; });
+			var pepBs = dataset.map(function(d) { return d["Person B"]; });
+
+			var allnodes = orgAs.concat(orgBs).concat(organizations).concat(people).concat(pepAs).concat(pepBs);
+
+			var allNodesSet = d3.set(allnodes).values();
+
+			// console.log(people);
+
+			var nodes = [],
+					links = [];
+
+			allNodesSet.forEach(function(orgs) {
+				nodes.push({"id" : orgs })
+			});
+
+			dataset.forEach(function(d) {
+				links.push({
+					"source" : d["Organization A"],
+					"target" : d["Organization B"],
+				})
+			});
+
+			dataset.forEach(function(d) {
+				links.push({
+					"source" : d.Organization,
+					"target" : d.Person,
+				})
+			});
+
+			dataset.forEach(function(d) {
+				links.push({
+					"source" : d["Person A"],
+					"target" : d["Person B"]
+				})
+			});
+
+			var graph = {
+				"nodes": nodes,
+				"links": links
+			}
+			console.log(graph);
+
+			var link = gContainer.append("g")
+				.attr("class", "links")
+				.selectAll("line")
+				.data(graph.links)
+			 .enter().append("line");
+
+			var node = gContainer.append("g")
+				.attr("class", "nodes")
+				.selectAll("circle")
+				.data(graph.nodes)
+			 .enter().append("circle")
+			 	.attr("r", 10)
+			 	.on("mouseenter", function(d) {
+			 		console.log(d.id);
+			 		d3.select(this)
+			 		.append("text")
+			 		.text("thing:" + d.id)
+			 		.attr("x", d.x)
+			 		.attr("y", d.y)
+			 		.style("stroke", "red")
+			 		// .text(function(d) { return d.id})
+			 		
+			 		// .text(function(d) {
+			 		// 	console.log(d.id)
+			 		//  return d.id });
+			 	})
+			 	.call(d3.drag()
+			 		.on("start", dragstarted)
+			 		.on("drag", dragged)
+			 		.on("end", dragended));
+
+		 	// node.append("title")
+		 	// 	.text(function(d) { return d.id; });
+
+		 	// var text = gContainer.append("g")
+		 	// 	.attr("class", "text")
+		 	// 	.selectAll("text")
+		 	// 	.data(graph.nodes)
+		 	//  .enter().append("text")
+		 	// 	.text(function(d, i) { return d.id; })
+		 	// 	.attr("dy", ".35em")
+
+
+		 	simulation
+		 		.nodes(graph.nodes)
+		 		.on("tick", ticked);
+
+	 		simulation.force("link")
+	 			.links(graph.links);
+
+	 		function ticked() {
+	 			link
+	        .attr("x1", function(d) { return d.source.x; })
+	        .attr("y1", function(d) { return d.source.y; })
+	        .attr("x2", function(d) { return d.target.x; })
+	        .attr("y2", function(d) { return d.target.y; });
+
+    		node
+	        .attr("cx", function(d) { return d.x; })
+	        .attr("cy", function(d) { return d.y; });
+
+	      // text
+       //  .attr("x", function(d) { return d.x - 5; })
+       //  .attr("y", function(d) { return d.y + 5; });
+	 		}
+
+		}); // d3.csv callback
+
+		function dragstarted(d) {
+		  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+		  d.fx = d.x;
+		  d.fy = d.y;
+		}
+
+		function dragged(d) {
+		  d.fx = d3.event.x;
+		  d.fy = d3.event.y;
+		}
+
+		function dragended(d) {
+		  if (!d3.event.active) simulation.alphaTarget(0);
+		  d.fx = null;
+		  d.fy = null;
+		}
+
+	</script>
+
+</body>
