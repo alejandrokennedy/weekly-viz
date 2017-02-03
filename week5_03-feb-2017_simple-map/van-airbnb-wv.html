@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+	<title></title>
+	<script src="//d3js.org/d3.v4.min.js"></script>
+	<script src="//d3js.org/topojson.v1.min.js"></script>
+</head>
+
+<style type="text/css">
+
+	body {
+		font-family: helvetica;
+		font-size: 12px;
+	}
+
+	svg {
+		border: 1px solid #f0f;
+		display: block;
+		margin: auto;
+	}
+
+	.vanOSMFeatures {
+  fill: none;
+  stroke: grey;
+	stroke-width: 1;
+	}
+
+</style>
+
+<body>
+
+<svg width="960" height="600"></svg>
+
+	<script>
+	//To Do
+
+		var svg = d3.select("svg"),
+			width = +svg.attr("width"),
+			height = +svg.attr("height");
+
+		d3.queue()
+			.defer(d3.json, "van_osm_line_mpshpr.json")
+			// .defer(d3.json, "vancouver_canada_osm_line.geojson")
+			.defer(d3.csv, "listings_detailed.csv")
+			.await(ready);
+
+		function ready(error, vanOSM, listings) {
+			if (error) throw error;
+			// console.log("vanOSM", vanOSM);
+			console.log("listings", listings);
+
+			var projection = d3.geoAlbers()
+				.rotate([123, 0, 0])
+				.fitExtent([[30, 10], [910, 590]], vanOSM);
+
+			var path = d3.geoPath()
+				.projection(projection)
+
+			svg.selectAll(".vanOSMFeatures")
+				.data(vanOSM.features)
+			  .enter().append("path")
+				.attr("class", "vanOSMFeatures")
+				.attr("d", path);
+
+			// svg.selectAll("")
+
+		} //ready callback
+
+	</script>
+
+</body>
