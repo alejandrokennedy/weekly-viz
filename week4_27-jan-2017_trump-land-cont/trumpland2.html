@@ -5,6 +5,7 @@
 	<title>Trump Land</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.0/d3.min.js" charset="utf-8"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+	<script src="https://rawgit.com/Kcnarf/d3-distanceLimitedVoronoi/d3v4/distance-limited-voronoi.js"></script>
 </head>
 
 <style type="text/css">
@@ -21,18 +22,8 @@
 		margin: 0;
 	}
 
-	#svgDiv {
-		border-style: solid;
-		border-color: #0000ff #ff0000;
-		/*height 100% doesn't work unless body and HTML are also 100%*/
-		/*height: 100%;*/
-		width: 80%;
-		/*center within div*/
-		margin: 0 auto;
-	}
-
 	svg {
-		/*border: 1px solid #f0f;*/
+		border: 1px solid #f0f;
 		display: block;
 		margin: auto;
 	}
@@ -67,11 +58,10 @@
 	  stroke-width: 4;
 	}
 
-	path {
-  pointer-events: all;
-  fill: none;
-  stroke: #666;
-  stroke-opacity: 0.2;
+	.cell {
+	  fill: pink;
+	  fill-opacity: .2;
+	  pointer-events: all;
 	}
 
 </style>
@@ -85,12 +75,19 @@
 	// global temp dataset form
 	// d3 office hours
 
-		var margin = {top: 50, right: 50, bottom: 50, left: 50},
+		var margin = {top: 0, right: 0, bottom: 0, left: 0},
 			width = window.innerWidth - margin.left - margin.right,
 			height = window.innerHeight - margin.top - margin.bottom;
 
-		var zoom = d3.zoom().scaleExtent([0.3, 5]).on("zoom", function () {
+	  var voronoi = d3.voronoi()
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; })
+    .extent([[-width, -height], [width + width, height + height]]);
+
+		var zoom = d3.zoom().scaleExtent([0.3, 7]).on("zoom", function () {
 			gContainer.attr("transform", d3.event.transform)
+			// voronoi.extent(zoom.extent()())
+			// console.log(zoom.extent();
 			});
 
 		var svg = d3.select("body").append("svg")
@@ -177,7 +174,7 @@
 				"nodes": nodes,
 				"links": links
 			}
-			console.log(graph);
+			// console.log("earlier console.log that I don't care about", graph);
 
 			var link = gContainer.append("g")
 				.attr("class", "links")
@@ -188,6 +185,7 @@
 			var node = gContainer.selectAll(".nodes")
 				.data(graph.nodes)
 			 .enter().append("g")
+				.attr("class", "nodes")
 				.call(d3.drag()
 			 		.on("start", dragstarted)
 			 		.on("drag", dragged)
@@ -216,7 +214,21 @@
 	 		simulation.force("link")
 	 			.links(graph.links);
 
+	 		//d3 v3
+	 		var cell = node.append("path")
+      .attr("class", "cell");
+
 	 		function ticked() {
+
+	 			// console.log(voronoi.polygons(graph.nodes));
+
+	 			cell
+	        .data(voronoi.polygons(graph.nodes))
+	        .attr("d", function(d) { 
+	        	// console.log(d);
+	        	return d ? "M" + d.join("L") : null; 
+	        });
+
 	 			link
 	        .attr("x1", function(d) { return d.source.x; })
 	        .attr("y1", function(d) { return d.source.y; })
