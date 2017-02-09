@@ -72,9 +72,6 @@
 	// To Do
 	// node buffer: http://bl.ocks.org/taktran/6677833
 
-	// global temp dataset form
-	// d3 office hours
-
 		var margin = {top: 0, right: 0, bottom: 0, left: 0},
 			width = window.innerWidth - margin.left - margin.right,
 			height = window.innerHeight - margin.top - margin.bottom;
@@ -86,8 +83,6 @@
 
 		var zoom = d3.zoom().scaleExtent([0.3, 7]).on("zoom", function () {
 			gContainer.attr("transform", d3.event.transform)
-			// voronoi.extent(zoom.extent()())
-			// console.log(zoom.extent();
 			});
 
 		var svg = d3.select("body").append("svg")
@@ -174,7 +169,6 @@
 				"nodes": nodes,
 				"links": links
 			}
-			// console.log("earlier console.log that I don't care about", graph);
 
 			var link = gContainer.append("g")
 				.attr("class", "links")
@@ -214,18 +208,14 @@
 	 		simulation.force("link")
 	 			.links(graph.links);
 
-	 		//d3 v3
 	 		var cell = node.append("path")
       .attr("class", "cell");
 
 	 		function ticked() {
 
-	 			// console.log(voronoi.polygons(graph.nodes));
-
 	 			cell
 	        .data(voronoi.polygons(graph.nodes))
 	        .attr("d", function(d) { 
-	        	// console.log(d);
 	        	return d ? "M" + d.join("L") : null; 
 	        });
 
