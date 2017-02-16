@@ -55,12 +55,13 @@
 	.nodes:hover text.labelShadow {
 	  display: inline;
 	  stroke: white;
-	  stroke-width: 4;
+	  stroke-width: 5;
 	}
 
-	.cell {
-	  fill: pink;
-	  fill-opacity: .2;
+	.clip-path-circle {
+		/*stroke: crimson;*/
+	  fill: none;
+	  /*fill-opacity: 0;*/
 	  pointer-events: all;
 	}
 
@@ -77,9 +78,9 @@
 			height = window.innerHeight - margin.top - margin.bottom;
 
 	  var voronoi = d3.voronoi()
-    .x(function(d) { return d.x; })
-    .y(function(d) { return d.y; })
-    .extent([[-width, -height], [width + width, height + height]]);
+	    .x(function(d) { return d.x; })
+	    .y(function(d) { return d.y; })
+	    .extent([[-width, -height], [width + width, height + height]]);
 
 		var zoom = d3.zoom().scaleExtent([0.3, 7]).on("zoom", function () {
 			gContainer.attr("transform", d3.event.transform)
@@ -108,6 +109,16 @@
 	  	.defer(d3.csv, "person-org-connections.csv")
 	  	.defer(d3.csv, "person-person-connections.csv")
 	  	.await(ready);
+
+	  function slug (id) {
+			return id.replace(/,/g,"")
+							 .replace(/\./g,"")
+							 .replace(/'/g,"")
+							 .replace(/"/g,"")
+							 .replace(/\(/g,"")
+							 .replace(/\)/g,"")
+						 	 .replace(/ /g,"");
+	  };
 
 	  function ready (error, orgOrg, personOrg, personPerson) {
 	  	if (error) throw error;
@@ -189,7 +200,7 @@
 					})
 
 			var circle = node.append("circle")
-			 	.attr("r", 9)
+			 	.attr("r", 7)
 			 	.style("fill", function(d) { return color(d.type); });
 
 			var labelShadow = node.append("text")
@@ -208,16 +219,33 @@
 	 		simulation.force("link")
 	 			.links(graph.links);
 
-	 		var cell = node.append("path")
-      .attr("class", "cell");
+	 		var clipPath = node.append("clipPath")
+	 			.attr("class", "clip")
+	 			.attr("id", function(d) { return "clip-" + slug(d.id); })
+	 			.append("path")
+	 			.attr("class", "clip-path-circle");
+
+	 		// var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+
+	 		var circleCatcher = node.append("circle")
+	 			.attr("r", 30)
+	 			// .style("fill", function(d, i) { return colorScale(i); })
+	 			// .style("fill", "green")
+	 			.style("fill-opacity", 0.0)
+	 			.style("stroke", "none")
+	 			.attr("clip-path", function(d) { return "url(#clip-" + slug(d.id) + ")"; });
 
 	 		function ticked() {
 
-	 			cell
+	 			clipPath
 	        .data(voronoi.polygons(graph.nodes))
 	        .attr("d", function(d) { 
 	        	return d ? "M" + d.join("L") : null; 
 	        });
+
+	      circleCatcher
+	      	.attr("cx", function(d) { return d.x; })
+	        .attr("cy", function(d) { return d.y; });
 
 	 			link
 	        .attr("x1", function(d) { return d.source.x; })
